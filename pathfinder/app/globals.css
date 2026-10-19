@@ -1,0 +1,26 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+:root{
+  --ink:#1B1F5E; --primary:#2F6FDB; --cyan:#38D3F0; --violet:#8B6CF0;
+  --bg:#F5F8FF; --line:#DDE5F7; --muted:#5B6490;
+  --ok:#0F8A66; --warn:#B9770E; --bad:#D23B41;
+  --font-display:"Plus Jakarta Sans",system-ui,sans-serif; --font-body:Inter,system-ui,sans-serif;
+  --grad:linear-gradient(120deg,#38D3F0 0%,#2F6FDB 55%,#8B6CF0 100%);
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px;border-radius:8px}
+.hex{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 2l26 15v30L28 62 2 47V17z' fill='none' stroke='%232F6FDB' stroke-opacity='.08'/%3E%3C/svg%3E")}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:12px;padding:.7rem 1.25rem;font-weight:600;transition:transform .15s,box-shadow .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 8px 20px -8px rgba(47,111,219,.6)}
+.btn-primary:hover{box-shadow:0 12px 26px -8px rgba(47,111,219,.7)}
+.btn-primary:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--primary)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.flow{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.skel{background:linear-gradient(90deg,#E8EEFC 0,#F4F7FE 50%,#E8EEFC 100%);background-size:400px 100%;animation:shimmer 1.4s infinite linear;border-radius:8px}
+@media (prefers-reduced-motion:reduce){.flow,.skel{animation:none}html{scroll-behavior:auto}}

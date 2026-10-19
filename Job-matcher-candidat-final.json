@@ -1,0 +1,650 @@
+{
+  "name": "Job matcher candidat",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "candidat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "00171d08-4de3-4beb-9504-ad684e978fe9",
+      "name": "Webhook",
+      "webhookId": "6698b957-40f9-40db-8a6f-66328515d025"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.input_type }}",
+                    "rightValue": "cv",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "317cf77b-9564-4c9b-b1dd-dacfccc8eff5"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cv"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "93de67e2-66d7-4464-8f6d-22a014526b9c",
+                    "leftValue": "={{ $json.input_type }}",
+                    "rightValue": "audio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Invalide"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "5dc2ce69-57d1-4f71-aa61-afe2f291f82c",
+      "name": "Orchestrateur router"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"message\": \"Envoie ton CV en PDF ou un audio (mp3, wav, m4a).\" }",
+        "options": {
+          "responseCode": 415
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        592,
+        240
+      ],
+      "id": "852b6ede-7b7c-4fc1-985f-7b51e97bda6a",
+      "name": "Réponse format refusé"
+    },
+    {
+      "parameters": {
+        "jsCode": "const BASE_URL = 'https://electric-nearest-mechanics-norm.trycloudflare.com'; // on la remplira à l'étape API\n\nconst item = $input.first();\nconst bin = item.binary || {};\nconst key = Object.keys(bin)[0] || null;\nconst fileName = key ? (bin[key].fileName || '').toLowerCase() : '';\nconst mime = key ? (bin[key].mimeType || '') : '';\n\nlet input_type = 'invalide';\nif (mime === 'application/pdf' || fileName.endsWith('.pdf')) input_type = 'cv';\nelse if (mime.startsWith('audio/') || /\\.(mp3|wav|m4a|ogg|flac|webm)$/.test(fileName)) input_type = 'audio';\n\nreturn [{ json: { base_url: BASE_URL, input_type, binary_key: key, file_name: fileName }, binary: bin }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "961528e6-7879-4c2a-96d6-0160d505a459",
+      "name": "Orchestrateur détecter"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        -160
+      ],
+      "id": "bfb8ca91-b28b-4c2a-a545-2bec7095537c",
+      "name": "Lire le PDF"
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $('Orchestrateur détecter').first().json;\nconst text = ($input.first().json.text || '').trim();\nreturn [{ json: { base_url: o.base_url, input_type: 'cv', text, n_words: text.split(/\\s+/).filter(Boolean).length } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -144
+      ],
+      "id": "aa83b862-06c0-4900-8d53-8101da9f7f11",
+      "name": "Préparer texte CV"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.base_url }}/transcribe",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        656,
+        48
+      ],
+      "id": "42dbcf9f-d673-4c5a-9052-771905395c70",
+      "name": "Transcrire audio",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $('Orchestrateur détecter').first().json;\nconst r = $input.first().json;\nreturn [{ json: { base_url: o.base_url, input_type: 'audio', text: r.text || '', n_words: r.n_words || 0 } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        16
+      ],
+      "id": "620f062a-3778-40b4-9353-17169f947988",
+      "name": "Préparer texte audio"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"message\": \"Ton audio est trop court ou illisible. Parle 20 à 60 secondes, en anglais : ton métier, tes années d'expérience et 3 compétences.\" }",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        208
+      ],
+      "id": "ccced0f9-e979-4f3e-86dd-a6c075780f60",
+      "name": "Réponse audio illisible"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "80cae000-2f5a-45cf-99db-8b2a6ddccc9c",
+              "leftValue": "={{ $json.n_words >= ($json.input_type === 'audio' ? 15 : 30) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -144
+      ],
+      "id": "f16ec06f-26a9-4e77-ad7e-349613db47ff",
+      "name": "Orchestrateur texte suffisant ?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"message\": \"Je n'arrive pas à lire assez de texte. Si ton PDF est une image scannée, envoie un PDF texte ou un audio de présentation.\" }",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        -16
+      ],
+      "id": "0fd23d91-cb51-42cb-9643-686ab64798b9",
+      "name": "Réponse texte trop court"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.base_url }}/analyze",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text }}"
+            },
+            {
+              "name": "input_type",
+              "value": "={{ $json.input_type }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1296,
+        -256
+      ],
+      "id": "0e454c85-3ba7-46d6-a6e7-0803f3ba1a84",
+      "name": "Lancer analyse",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1600,
+        -304
+      ],
+      "id": "0f39c25d-39cc-4ddd-b602-65236373d836",
+      "name": "Attendre 20 s",
+      "webhookId": "50fe2d0e-39cc-4396-b0bb-2ffa0e501e83"
+    },
+    {
+      "parameters": {
+        "url": "=https://electric-nearest-mechanics-norm.trycloudflare.com/result/{{ $('Lancer analyse').first().json.job_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1776,
+        -288
+      ],
+      "id": "07a41006-2f82-4aec-983c-5050ec8ec3e0",
+      "name": "Lire résultat",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "running",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ce87d6c9-3aca-4758-8b69-bc47695dbc6a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "En cours"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "169cb9f7-1ac2-483c-bfb7-ef3e8c559a88",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "done",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Terminé"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f187eb21-1a33-4336-ab03-3aee7f941470",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Erreur"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2064,
+        -336
+      ],
+      "id": "fa95f832-df7f-4efe-8d02-a818434ce2ed",
+      "name": "Analyse terminée ?"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2336,
+        -336
+      ],
+      "id": "80d363af-47d8-458c-8115-b2efe33ba1ee",
+      "name": "Réponse rapport"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"message\": \"Le service d'analyse est indisponible pour le moment. Réessaie dans quelques minutes.\" }",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2000,
+        48
+      ],
+      "id": "7318a872-54fc-48d6-a6d4-0d2897f03adb",
+      "name": "Réponse erreur"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Orchestrateur détecter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrateur router": {
+      "main": [
+        [
+          {
+            "node": "Lire le PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transcrire audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse format refusé",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrateur détecter": {
+      "main": [
+        [
+          {
+            "node": "Orchestrateur router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire le PDF": {
+      "main": [
+        [
+          {
+            "node": "Préparer texte CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrire audio": {
+      "main": [
+        [
+          {
+            "node": "Préparer texte audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse audio illisible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer texte CV": {
+      "main": [
+        [
+          {
+            "node": "Orchestrateur texte suffisant ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparer texte audio": {
+      "main": [
+        [
+          {
+            "node": "Orchestrateur texte suffisant ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orchestrateur texte suffisant ?": {
+      "main": [
+        [
+          {
+            "node": "Lancer analyse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse texte trop court",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancer analyse": {
+      "main": [
+        [
+          {
+            "node": "Attendre 20 s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attendre 20 s": {
+      "main": [
+        [
+          {
+            "node": "Lire résultat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire résultat": {
+      "main": [
+        [
+          {
+            "node": "Analyse terminée ?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyse terminée ?": {
+      "main": [
+        [
+          {
+            "node": "Attendre 20 s",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse rapport",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Réponse erreur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6c6bf767-c276-42fe-9f01-27779d59ca84",
+  "meta": {
+    "instanceId": "79b7a345af7f954ab0deee0218a74a684f86a15761695f2c5804319146abac0b"
+  },
+  "id": "ydTejpLmhxhbtTCv",
+  "tags": []
+}

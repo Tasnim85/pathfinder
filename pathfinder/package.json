@@ -1,0 +1,40 @@
+{
+  "name": "pathfinder",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "seed": "node scripts/seed.mjs",
+    "mailtest": "node scripts/mailtest.mjs",
+    "mailpreview": "node --experimental-strip-types scripts/mailpreview.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "exceljs": "^4.4.0",
+    "jose": "^6.2.12",
+    "lucide-react": "^0.447.0",
+    "next": "^14.2.35",
+    "nodemailer": "^10.1.6",
+    "pdf-parse": "^2.4.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-google-recaptcha": "^3.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/react-google-recaptcha": "^2.1.9",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,13 @@
+# Unpinned minimum. For identical behaviour to Kaggle, prefer requirements.lock.txt (made by step 1) + the extras below.
+torch
+transformers
+accelerate
+bitsandbytes
+sentence-transformers
+chromadb
+pandas
+numpy
+fastapi
+uvicorn
+python-multipart
+num2words

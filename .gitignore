@@ -1,0 +1,30 @@
+# ---------- secrets: NEVER commit ----------
+.env
+.env.local
+.env.*.local
+*.pem
+.env.example
+
+# ---------- website (pathfinder/) ----------
+pathfinder/node_modules/
+pathfinder/.next/
+pathfinder/data/                 # SQLite database = real accounts
+pathfinder/email-preview.html
+pathfinder/next-env.d.ts
+pathfinder/*.tsbuildinfo
+
+# ---------- AI service (pathfinder-ai/) ----------
+pathfinder-ai/data/              # ~160 MB search index: keep it on Hugging Face, not in git
+pathfinder-ai/cache/
+pathfinder-ai/reports/
+pathfinder-ai/*.log
+__pycache__/
+*.pyc
+
+# ---------- notebooks / OS / editors ----------
+.ipynb_checkpoints/
+*.zip
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
