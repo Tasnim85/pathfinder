@@ -436,13 +436,6 @@ Stack: Next.js 14 (App Router) · TypeScript · Tailwind CSS · Zod · jose (ses
 | reCAPTCHA does not appear | Keys missing, or the domain (`localhost`) not added to the key |
 | Kaggle session stops after ~40 min | Leave cell 4 running; free sessions also have weekly GPU limits |
 
-## 14. Known limits (honest list)
-- The AI is only available while its Kaggle session (or your GPU server) is running; the tunnel address changes at each restart.
-- Inputs are **English**; reports are written in French by default (`REPORT_LANG=en` for English).
-- Job offers come from a research dataset (*Fake Job Postings*, 2,954 offers in 9 categories) and are attributed to **demo recruiters**; they are not real vacancies.
-- *Design* and *Arts* profiles match poorly (few offers in the dataset). Measured category match: CV 77 %, spoken text 68 %, Whisper transcript 70 %; Whisper word error rate 1.9 %.
-- Scores and label thresholds are indicative, not learned. A score never replaces a human decision.
-- Scanned PDFs are not read (no OCR). Password reset and email verification are not implemented.
 
-## 15. Credits
+## 14. Credits
 Project built by the PathFinder team. AI models: Qwen2.5 (Alibaba), Whisper (OpenAI), BGE (BAAI). Dataset: *Fake Job Postings* and *Resume.csv* (Kaggle).
